@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Только одна библиотека для генерации -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -86,6 +88,34 @@
             outline: none;
         }
 
+        .input-group textarea {
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .input-group textarea:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        .input-group textarea::placeholder {
+            color: #888;
+            opacity: 0.7;
+        }
+
         .checkbox-group {
             display: flex;
             align-items: center;
@@ -138,6 +168,33 @@
             color: #888;
             font-weight: normal;
             font-size: 0.9em;
+        }
+
+        .qr-item .placeholder {
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--input-bg);
+            border-radius: 5px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .qr-item .buttons-group {
+            width: 100%;
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .qr-item .buttons-group button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0;
         }
 
         /* Добавляем стили для печати */
@@ -287,29 +344,285 @@
             flex-direction: column;
             align-items: center;
         }
+
+        .mode-switch {
+            display: flex;
+            background: var(--container-bg);
+            border-radius: 20px;
+            margin: 10px 0;
+            padding: 5px;
+            gap: 5px;
+        }
+
+        .mode-switch button {
+            flex: 1;
+            margin: 0;
+            border-radius: 15px;
+            background: none;
+            font-size: 14px;
+            padding: 10px 5px;
+        }
+
+        .mode-switch button.active {
+            background: var(--button-bg);
+        }
+
+        .drop-zone {
+            width: 100%;
+            height: 100px;
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--button-bg);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--button-bg);
+            background: rgba(46, 125, 50, 0.1);
+        }
+
+        #fileInfo {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .input-section {
+            display: none;
+            width: 100%;
+        }
+
+        .input-section.active {
+            display: block;
+        }
+
+        .output-mode-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background: var(--input-bg);
+            border-radius: 6px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--button-bg);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(36px);
+        }
+
+        .scan-input-section {
+            background: var(--container-bg);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+
+        .scan-input-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .scan-input-section textarea {
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            min-height: 80px;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+
+        .scan-method-title {
+            background: var(--button-bg);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .scan-drop-zone {
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+
+        .scan-drop-zone:hover {
+            border-color: var(--button-bg);
+        }
+
+        .scan-result-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--input-bg);
+            border-radius: 6px;
+        }
+
+        .scan-result-item {
+            background-color: var(--item-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .scan-result-content {
+            display: grid;
+            grid-template-columns: auto 120px;
+            gap: 15px;
+            align-items: start;
+        }
+
+        .result-data {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .result-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 2px;
+        }
+
+        .result-value {
+            font-size: 1.1em;
+            word-break: break-word;
+        }
+
+        .copy-button {
+            background-color: var(--button-bg);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .copy-button:hover {
+            background-color: var(--button-hover);
+        }
     </style>
 </head>
 <body>
     <div class="tabs">
-        <button class="tab-button active" onclick="openTab('generate')">Генерация</button>
-        <button class="tab-button" onclick="openTab('scan')">Сканирование</button>
+        <button class="tab-button active" onclick="openTab('generate')">Шифрование</button>
+        <button class="tab-button" onclick="openTab('scan')">Дешифрование</button>
     </div>
 
     <!-- Только генерация -->
     <div id="generateTab" class="tab-content active">
         <div class="qr-container">
-            <h2>Генератор QR кодов</h2>
             <div class="input-group">
-                <input type="text" id="qrTitle" placeholder="Адрес кошелька">
-                <input type="text" id="qrSubtitle" placeholder="Название (необязательно)">
-                <input type="text" id="qrContent" placeholder="Seed-фраза">
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="truncateTitles" onchange="updateQRList()">
-                <label for="truncateTitles">Сжимать длинные адреса</label>
+                <div class="mode-switch">
+                    <button id="seedMode" class="active" onclick="switchMode('seed')">Seed-фразы</button>
+                    <button id="textMode" onclick="switchMode('text')">Текст</button>
+                    <button id="fileMode" onclick="switchMode('file')">Файл</button>
+                </div>
+
+                <!-- Секция для seed-фраз -->
+                <div id="seedSection" class="input-section active">
+                    <input type="text" id="addressInput" placeholder="Адрес кошелька">
+                    <input type="text" id="seedName" placeholder="Название (необязательно)">
+                    <input type="text" id="seedPhrase" placeholder="Seed-фраза">
+                </div>
+
+                <!-- Секция для текста -->
+                <div id="textSection" class="input-section">
+                    <input type="text" id="textTitle" placeholder="Название">
+                    <textarea id="textContent" placeholder="Введите текст" rows="4"></textarea>
+                    <div class="output-mode-switch">
+                        <span>QR код</span>
+                        <label class="switch">
+                            <input type="checkbox" id="textOutputMode">
+                            <span class="slider"></span>
+                        </label>
+                        <span>Строка/файл</span>
+                    </div>
+                </div>
+
+                <!-- В секции для файлов добавляем скрытое поле для хранения содержимого файла -->
+                <div id="fileSection" class="input-section">
+                    <input type="text" id="fileTitle" placeholder="Название">
+                    <input type="hidden" id="fileContent">
+                    <div id="dropZone" class="drop-zone">
+                        Перетащите файл сюда или кликните для выбора
+                        <input type="file" style="display: none">
+                    </div>
+                    <div id="fileInfo"></div>
+                    <div class="output-mode-switch">
+                        <span>QR код</span>
+                        <label class="switch">
+                            <input type="checkbox" id="fileOutputMode">
+                            <span class="slider"></span>
+                        </label>
+                        <span>Строка/файл</span>
+                    </div>
+                </div>
+
+                <!-- Общие поля для всех режимов -->
+                <input type="password" id="encryptPassword" placeholder="Пароль для шифрования">
+                <input type="text" id="passwordHint" placeholder="Подсказка для пароля (необязательно)">
             </div>
             <div>
-                <button onclick="generateQR()">Создать QR</button>
+                <button id="generateButton" onclick="generateQR()">Создать QR</button>
                 <button onclick="printQRCodes()">Печать всех QR</button>
             </div>
         </div>
@@ -320,14 +633,38 @@
     <!-- Только сканирование -->
     <div id="scanTab" class="tab-content">
         <div class="scan-results-container">
-            <h2>Сканирование QR кодов</h2>
-            <video id="videoElement" autoplay playsinline></video>
-            <div style="margin: 20px 0; text-align: center;">
-                <button onclick="toggleScanner()">
-                    <span id="scanButtonText">Включить камеру</span>
-                </button>
-                <button onclick="clearScanResults()">Очистить результаты</button>
+            <h2>Сканирование и расшифровка</h2>
+
+            <!-- Секция QR сканера -->
+            <div class="scan-input-section">
+                <h3>Сканировать QR код</h3>
+                <video id="videoElement" autoplay playsinline></video>
+                <div style="margin: 10px 0; text-align: center;">
+                    <button onclick="toggleScanner()">
+                        <span id="scanButtonText">Включить камеру</span>
+                    </button>
+                </div>
             </div>
+
+            <!-- Секция ввода строки -->
+            <div class="scan-input-section">
+                <h3>Вставить зашифрованную строку</h3>
+                <textarea id="encryptedInput" placeholder="Вставьте зашифрованную строку"></textarea>
+                <button onclick="decodeInputString()">Расшифровать</button>
+            </div>
+
+            <!-- Секция загрузки файла -->
+            <div class="scan-input-section">
+                <h3>Загрузить файл</h3>
+                <div id="scanDropZone" class="scan-drop-zone">
+                    Перетащите файл сюда или кликните для выбора
+                    <input type="file" style="display: none">
+                </div>
+            </div>
+
+            <button onclick="clearScanResults()">Очистить результаты</button>
+
+            <!-- Результаты -->
             <div id="scanResultsList"></div>
         </div>
     </div>
@@ -336,10 +673,11 @@
 </body>
 
 <script>
+    const MAX_QR_DATA_SIZE = 2953; // Максимальный размер данных для QR кода
     let generatedQRs = [];
 
+    // Модифицируем функцию truncateText - теперь всегда сжимает длинные адреса
     function truncateText(text) {
-        if (!document.getElementById('truncateTitles').checked) return text;
         if (text.length <= 10) return text;
         const start = text.substring(0, 5);
         const end = text.substring(text.length - 5);
@@ -348,35 +686,195 @@
 
     // Функция для создания QR кода
     function generateQRCode(text) {
-        // Правильное кодирование текста перед генерацией QR
-        const qr = qrcode(4, 'M');
-        qr.addData(text);
-        qr.make();
-        return qr.createDataURL(4); // Размер модуля 4 для лучшей читаемости
+        // Автоматически определяем оптимальный размер QR кода
+        let typeNumber;
+        for (typeNumber = 0; typeNumber <= 40; typeNumber++) {
+            try {
+                const qr = qrcode(typeNumber, 'L'); // Используем L вместо M для большей ёмкости
+                qr.addData(text);
+                qr.make();
+                return qr.createDataURL(4);
+            } catch (e) {
+                if (typeNumber === 40) throw e; // Если достигли максимума, выбрасываем ошибку
+                // Иначе пробуем следующий размер
+            }
+        }
     }
 
-    async function generateQR() {
-        const title = document.getElementById('qrTitle').value;
-        const subtitle = document.getElementById('qrSubtitle').value;
-        const content = document.getElementById('qrContent').value;
-
-        if (!title || !content) {
-            alert('Пожалуйста, заполните обязательные поля:\n- Адрес кошелька\n- Seed-фраза');
+    async function handleFileSelection(file) {
+        if (!file) return;
+        
+        const forceRaw = document.getElementById('fileOutputMode').checked;
+        if (!forceRaw && file.size > MAX_QR_DATA_SIZE) {
+            alert(`Файл слишком большой для QR кода. Максимальный размер: ${MAX_QR_DATA_SIZE} байт\nПереключите режим на "Строка/файл" для больших файлов`);
             return;
         }
 
-        // Генерируем QR код локально
-        const qrDataUrl = generateQRCode(content);
-        
-        generatedQRs.push({
-            title: title,
-            subtitle: subtitle || '',
-            content: content,
-            url: qrDataUrl
-        });
+        try {
+            const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
 
-        updateQRList();
-        clearInputs();
+            document.getElementById('fileContent').value = base64Data;
+            document.getElementById('fileContent').setAttribute('data-filename', file.name); // Сохраняем оригинальное имя
+            document.getElementById('fileInfo').textContent = 
+                `Файл: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+        } catch (error) {
+            console.error('Ошибка чтения файла:', error);
+            alert('Ошибка при чтении файла');
+        }
+    }
+
+    function switchMode(mode) {
+        // Убираем активный класс со всех кнопок и секций
+        document.querySelectorAll('.mode-switch button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.input-section').forEach(section => section.classList.remove('active'));
+
+        // Активируем нужную кнопку и секцию
+        document.getElementById(mode + 'Mode').classList.add('active');
+        document.getElementById(mode + 'Section').classList.add('active');
+
+        // Обновляем текст кнопки при переключении режимов
+        updateGenerateButtonText();
+    }
+
+    // Добавляем обработчики изменения положения ползунков
+    document.getElementById('textOutputMode').addEventListener('change', updateGenerateButtonText);
+    document.getElementById('fileOutputMode').addEventListener('change', updateGenerateButtonText);
+
+    // Функция обновления текста кнопки
+    function updateGenerateButtonText() {
+        const generateButton = document.getElementById('generateButton');
+        const activeMode = document.querySelector('.mode-switch button.active').id.replace('Mode', '');
+        
+        if (activeMode === 'seed') {
+            generateButton.textContent = 'Создать QR';
+            return;
+        }
+
+        const isRawMode = (activeMode === 'text' && document.getElementById('textOutputMode').checked) ||
+                         (activeMode === 'file' && document.getElementById('fileOutputMode').checked);
+        
+        generateButton.textContent = isRawMode ? 'Зашифровать' : 'Создать QR';
+    }
+
+    function generateQR() {
+        const password = document.getElementById('encryptPassword').value;
+        const passwordHint = document.getElementById('passwordHint').value;
+        const activeMode = document.querySelector('.mode-switch button.active').id.replace('Mode', '');
+
+        if (!password) {
+            alert('Пожалуйста, введите пароль для шифрования');
+            return;
+        }
+
+        try {
+            let qrData;
+            switch (activeMode) {
+                case 'seed':
+                    qrData = generateSeedQR(password, passwordHint);
+                    break;
+                case 'text':
+                    qrData = generateTextQR(password, passwordHint);
+                    break;
+                case 'file':
+                    qrData = generateFileQR(password, passwordHint);
+                    break;
+            }
+
+            if (!qrData) return;
+
+            const jsonString = JSON.stringify(qrData);
+            const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
+            
+            // Проверяем режим вывода
+            const forceRaw = (activeMode === 'text' && document.getElementById('textOutputMode').checked) ||
+                           (activeMode === 'file' && document.getElementById('fileOutputMode').checked);
+            
+            // Генерируем QR только если данные подходят по размеру и не включен режим строки/файла
+            const isLarge = !forceRaw && base64Data.length > MAX_QR_DATA_SIZE;
+            const qrDataUrl = (isLarge || forceRaw) ? null : generateQRCode(base64Data);
+            
+            generatedQRs.push({
+                title: qrData.shortAddress || qrData.title,
+                subtitle: qrData.name || '',
+                content: '***Зашифровано***',
+                url: qrDataUrl,
+                rawData: base64Data,
+                isLarge: isLarge || forceRaw,
+                type: activeMode
+            });
+
+            updateQRList();
+            clearInputs();
+        } catch (error) {
+            console.error('Ошибка генерации:', error);
+            alert('Ошибка при создании');
+        }
+    }
+
+    // Изменяем функцию generateSeedQR
+    function generateSeedQR(password, hint) {
+        const address = document.getElementById('addressInput').value;
+        const name = document.getElementById('seedName').value;
+        const seedPhrase = document.getElementById('seedPhrase').value;
+
+        if (!address || !seedPhrase) {
+            alert('Заполните адрес кошелька и seed-фразу');
+            return null;
+        }
+
+        return {
+            type: 'seed',
+            shortAddress: truncateText(address),
+            address: CryptoJS.AES.encrypt(address, password).toString(),
+            name: name,
+            seed: CryptoJS.AES.encrypt(seedPhrase, password).toString(),
+            encrypted: true,
+            hint: hint || ''
+        };
+    }
+
+    function generateTextQR(password, hint) {
+        const title = document.getElementById('textTitle').value;
+        const content = document.getElementById('textContent').value;
+
+        if (!title || !content) {
+            alert('Заполните название и текст');
+            return null;
+        }
+
+        return {
+            type: 'text',
+            title: title,
+            content: CryptoJS.AES.encrypt(content, password).toString(),
+            encrypted: true,
+            hint: hint || ''
+        };
+    }
+
+    function generateFileQR(password, hint) {
+        const title = document.getElementById('fileTitle').value;
+        const content = document.getElementById('fileContent').value;
+        const originalFilename = document.getElementById('fileContent').getAttribute('data-filename') || title;
+
+        if (!title || !content) {
+            alert('Выберите файл и укажите название');
+            return null;
+        }
+
+        return {
+            type: 'file',
+            title: title, // Отображаемое имя
+            content: CryptoJS.AES.encrypt(content, password).toString(),
+            originalFilename: CryptoJS.AES.encrypt(originalFilename, password).toString(), // Шифруем оригинальное имя
+            encrypted: true,
+            hint: hint || '',
+            isFile: true
+        };
     }
 
     function updateQRList() {
@@ -386,22 +884,66 @@
         generatedQRs.forEach((qr, index) => {
             const qrItem = document.createElement('div');
             qrItem.className = 'qr-item';
+
+            // Определяем содержимое в зависимости от типа и размера
+            const contentHtml = qr.isLarge 
+                ? `<div class="placeholder">${qr.type === 'file' ? 'ФАЙЛ' : 'ТЕКСТ'}</div>`
+                : `<img src="${qr.url}" alt="QR код">`;
+
+            // Добавляем кнопку копирования для всех типов QR кодов
+            const buttonsHtml = qr.isLarge 
+                ? `<div class="buttons-group">
+                    <button onclick="copyData(${index})">Копировать</button>
+                    <button onclick="downloadData(${index})">Скачать</button>
+                    <button onclick="removeQR(${index})">Удалить</button>
+                   </div>`
+                : `<div class="buttons-group">
+                    <button onclick="copyData(${index})">Копировать</button>
+                    <button onclick="removeQR(${index})">Удалить</button>
+                   </div>`;
+
             qrItem.innerHTML = `
                 <h3 title="${qr.title}">${truncateText(qr.title)}</h3>
                 <h4>${qr.subtitle}</h4>
-                <img src="${qr.url}" alt="QR код">
-                <div style="width: 100%; text-align: center; margin-top: 10px;">
-                    <button onclick="removeQR(${index})">Удалить</button>
-                </div>
+                ${contentHtml}
+                ${buttonsHtml}
             `;
             qrList.appendChild(qrItem);
         });
     }
 
+    function copyData(index) {
+        const data = generatedQRs[index].rawData;
+        navigator.clipboard.writeText(data).then(() => {
+        }).catch(err => {
+            console.error('Ошибка при копировании:', err);
+            alert('Ошибка при копировании');
+        });
+    }
+
+    function downloadData(index) {
+        const qr = generatedQRs[index];
+        const blob = new Blob([qr.rawData], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${qr.title || 'data'}_qr`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
     function clearInputs() {
-        document.getElementById('qrTitle').value = '';
-        document.getElementById('qrSubtitle').value = '';
-        document.getElementById('qrContent').value = '';
+        // Очищаем все поля ввода
+        ['addressInput', 'seedName', 'seedPhrase', 
+         'textTitle', 'textContent', 
+         'fileTitle', 'fileContent', 
+         'encryptPassword', 'passwordHint'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.value = '';
+        });
+        document.getElementById('fileInfo').textContent = '';
     }
 
     function removeQR(index) {
@@ -423,12 +965,92 @@
     let scannedResults = [];
 
     function addScanResult(text) {
-        if (!scannedResults.includes(text)) {
-            // Декодируем отсканированный текст
-            const decodedText = decodeURIComponent(text);
-            scannedResults.push(decodedText);
+        if (!text) return;
+        
+        try {
+            console.log("Обработка QR кода:", text);
+            const jsonString = decodeURIComponent(escape(atob(text)));
+            const data = JSON.parse(jsonString);
+            
+            if (data.encrypted) {
+                const hintMessage = data.hint ? `\nПодсказка: ${data.hint}` : '';
+                const password = prompt('Введите пароль для расшифровки:' + hintMessage);
+                if (!password) return;
+
+                try {
+                    const result = decryptData(data, password);
+                    if (result) {
+                        addDecryptedResult(result, 'qr', data.type);
+                    }
+                } catch (e) {
+                    console.error('Ошибка расшифровки:', e);
+                    alert('Ошибка при расшифровке данных');
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка при обработке QR кода:', error);
+        }
+    }
+
+    function formatUnencryptedResult(data) {
+        switch (data.type) {
+            case 'seed':
+                return `Адрес: ${data.address}\nНазвание: ${data.name}\nSeed: ${data.seed}`;
+            case 'text':
+                return `Название: ${data.title}\nСодержимое: ${data.content}`;
+            case 'file':
+                return `Название: ${data.title}\nСодержимое: ${data.content}`;
+        }
+    }
+
+    function handleSeedScan(data, password) {
+        const complexPassword = password + data.shortAddress;
+        
+        const decryptedAddressBytes = CryptoJS.AES.decrypt(data.address, complexPassword);
+        const decryptedAddress = decryptedAddressBytes.toString(CryptoJS.enc.Utf8);
+        
+        if (!decryptedAddress) {
+            throw new Error('Неверный пароль');
+        }
+
+        const decryptedSeedBytes = CryptoJS.AES.decrypt(data.seed, complexPassword);
+        const decryptedSeed = decryptedSeedBytes.toString(CryptoJS.enc.Utf8);
+
+        const formattedResult = `Адрес: ${decryptedAddress}\nНазвание: ${data.name}\nSeed: ${decryptedSeed}`;
+        if (!scannedResults.includes(formattedResult)) {
+            scannedResults.push(formattedResult);
             updateScanResults();
         }
+    }
+
+    function handleTextScan(data, password) {
+        const complexPassword = password + data.title;
+        
+        const decryptedContentBytes = CryptoJS.AES.decrypt(data.content, complexPassword);
+        const decryptedContent = decryptedContentBytes.toString(CryptoJS.enc.Utf8);
+
+        const formattedResult = `Название: ${data.title}\nСодержимое: ${decryptedContent}`;
+        if (!scannedResults.includes(formattedResult)) {
+            scannedResults.push(formattedResult);
+            updateScanResults();
+        }
+    }
+
+    function handleFileScan(data, password) {
+        const complexPassword = password + data.title;
+        
+        const decryptedContentBytes = CryptoJS.AES.decrypt(data.content, complexPassword);
+        const decryptedContent = decryptedContentBytes.toString(CryptoJS.enc.Utf8);
+
+        const blob = new Blob([decodeURIComponent(escape(atob(decryptedContent)))]);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = data.title;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 
     function updateScanResults() {
@@ -446,12 +1068,22 @@
         });
     }
 
+    // Обновляем функцию copyText для корректной работы со спецсимволами
     function copyText(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Текст скопирован!');
-        }).catch(err => {
+        // Создаем временный элемент для копирования
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        
+        try {
+            document.execCommand('copy');
+        } catch (err) {
             console.error('Ошибка при копировании:', err);
-        });
+            alert('Ошибка при копировании');
+        }
+        
+        document.body.removeChild(textarea);
     }
 
     function clearScanResults() {
@@ -463,6 +1095,7 @@
         const video = document.getElementById('videoElement');
         const buttonText = document.getElementById('scanButtonText');
         const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
         
         if (videoStream) {
             videoStream.getTracks().forEach(track => track.stop());
@@ -475,45 +1108,97 @@
         try {
             buttonText.textContent = 'Выключить камеру';
             video.style.display = 'block';
-            videoStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment" } 
+
+            videoStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
             });
             video.srcObject = videoStream;
 
-            // Используем встроенный BarcodeDetector
-            if ('BarcodeDetector' in window) {
-                const barcodeDetector = new BarcodeDetector({
-                    formats: ['qr_code']
-                });
-
+            // Ждем загрузки видео
+            await new Promise((resolve) => {
                 video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    video.play();
+                    resolve();
                 };
+            });
 
-                const scan = async () => {
-                    if (!videoStream) return;
+            // Устанавливаем размеры canvas равными размерам видео
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
-                    try {
-                        const barcodes = await barcodeDetector.detect(video);
-                        for (const barcode of barcodes) {
-                            addScanResult(barcode.rawValue);
-                        }
-                    } catch (error) {
-                        console.error('Ошибка сканирования:', error);
+            // Функция сканирования
+            const scanFrame = () => {
+                if (!videoStream) return;
+
+                // Копируем кадр из видео на canvas
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Получаем данные изображения
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                try {
+                    // Пытаемся найти QR код в кадре
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+
+                    if (code) {
+                        console.log("QR код найден:", code.data);
+                        
+
+                        processEncryptedData(code.data, 'text');
+
+
+                        // Добавляем небольшую паузу после успешного сканирования
+                        setTimeout(() => {
+                            if (videoStream) requestAnimationFrame(scanFrame);
+                        }, 1000);
+                    } else {
+                        requestAnimationFrame(scanFrame);
                     }
+                } catch (error) {
+                    console.error('Ошибка при сканировании:', error);
+                    requestAnimationFrame(scanFrame);
+                }
+            };
 
-                    requestAnimationFrame(scan);
-                };
+            // Запускаем сканирование
+            scanFrame();
 
-                requestAnimationFrame(scan);
-            } else {
-                alert('Ваш браузер не поддерживает сканирование QR кодов');
-            }
         } catch (error) {
             buttonText.textContent = 'Включить камеру';
             console.error('Ошибка доступа к камере:', error);
-            alert('Не удалось получить доступ к камере');
+            alert('Не удалось получить доступ к камере: ' + error.message);
+        }
+    }
+
+    // Обновляем функцию addScanResult для лучшей обработки ошибок
+    function addScanResult(text) {
+        if (!text) return;
+        
+        try {
+            console.log("Обработка QR кода:", text);
+            const jsonString = decodeURIComponent(escape(atob(text)));
+            const data = JSON.parse(jsonString);
+            
+            if (data.encrypted) {
+                const hintMessage = data.hint ? `\nПодсказка: ${data.hint}` : '';
+                const password = prompt('Введите пароль для расшифровки:' + hintMessage);
+                if (!password) return;
+
+                try {
+                    processEncryptedData(text, 'qr');
+                } catch (e) {
+                    console.error('Ошибка расшифровки:', e);
+                    alert('Ошибка при расшифровке данных');
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка при обработке QR кода:', error);
         }
     }
 
@@ -536,10 +1221,372 @@
 
         // Останавливаем сканер при переключении на вкладку генерации
         if (tabName === 'generate' && videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
+            toggleScanner();
             document.getElementById('videoElement').style.display = 'none';
             document.getElementById('scanButtonText').textContent = 'Включить камеру';
+
+        }
+    }
+
+    // Добавляем обработчики для drag&drop
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = dropZone.querySelector('input[type="file"]');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0]));
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFileSelection(e.dataTransfer.files[0]);
+    });
+
+    // Обновляем функцию addScanResult для поддержки файлов
+    function addScanResult(text) {
+        try {
+            const jsonString = decodeURIComponent(escape(atob(text)));
+            const data = JSON.parse(jsonString);
+            
+            if (data.encrypted) {
+                const hintMessage = data.hint ? `\nПодсказка: ${data.hint}` : '';
+                const password = prompt('Введите пароль для расшифровки:' + hintMessage);
+                if (!password) return;
+
+                try {
+                    const complexPassword = password + data.title;
+                    
+                    const decryptedContentBytes = CryptoJS.AES.decrypt(data.content, complexPassword);
+                    const decryptedContent = decryptedContentBytes.toString(CryptoJS.enc.Utf8);
+
+                    if (data.isFile) {
+                        // Для файлов создаем ссылку для скачивания
+                        const blob = new Blob([decodeURIComponent(escape(atob(decryptedContent)))]);
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = data.title;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                    } else {
+                        const formattedResult = `Название: ${data.title}\nСодержимое: ${decryptedContent}`;
+                        if (!scannedResults.includes(formattedResult)) {
+                            scannedResults.push(formattedResult);
+                            updateScanResults();
+                        }
+                    }
+                } catch (e) {
+                    alert('Неверный пароль для расшифровки');
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка при декодировании QR кода:', error);
+            if (!scannedResults.includes(text)) {
+                scannedResults.push(text);
+                updateScanResults();
+            }
+        }
+    }
+
+    // Функция для обработки введенной строки
+    function decodeInputString() {
+        const input = document.getElementById('encryptedInput').value.trim();
+        if (!input) {
+            alert('Введите зашифрованную строку');
+            return;
+        }
+        processEncryptedData(input, 'text');
+    }
+
+    // Обработчики для зоны загрузки файлов в сканере
+    const scanDropZone = document.getElementById('scanDropZone');
+    const scanFileInput = scanDropZone.querySelector('input[type="file"]');
+
+    scanDropZone.addEventListener('click', () => scanFileInput.click());
+    scanFileInput.addEventListener('change', (e) => handleScanFileSelection(e.target.files[0]));
+    
+    scanDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        scanDropZone.style.borderColor = 'var(--button-bg)';
+    });
+    
+    scanDropZone.addEventListener('dragleave', () => {
+        scanDropZone.style.borderColor = '';
+    });
+    
+    scanDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        scanDropZone.style.borderColor = '';
+        handleScanFileSelection(e.dataTransfer.files[0]);
+    });
+
+    // Обработка выбранного файла
+    async function handleScanFileSelection(file) {
+        if (!file) return;
+
+        try {
+            const text = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+
+            processEncryptedData(text.trim(), 'file');
+        } catch (error) {
+            console.error('Ошибка чтения файла:', error);
+            alert('Ошибка при чтении файла');
+        }
+    }
+
+    // Общая функция обработки зашифрованных данных
+    function processEncryptedData(data, source) {
+        try {
+            const jsonString = decodeURIComponent(escape(atob(data)));
+            const decodedData = JSON.parse(jsonString);
+            
+            if (!decodedData.encrypted) {
+                alert('Данные не зашифрованы');
+                return;
+            }
+
+            const hintMessage = decodedData.hint ? `\nПодсказка: ${decodedData.hint}` : '';
+            const password = prompt('Введите пароль для расшифровки:' + hintMessage);
+            if (!password) return;
+
+            try {
+                const result = decryptData(decodedData, password);
+                if (result) {
+                    addDecryptedResult(result, source, decodedData.type);
+                }
+            } catch (e) {
+                console.error('Ошибка:', e);
+                alert('Неверный пароль для расшифровки');
+            }
+        } catch (error) {
+            alert('Неверный формат данных');
+            console.error('Ошибка декодирования:', error);
+        }
+    }
+
+    // Функция расшифровки данных
+    // Изменяем обработку seed в функции decryptData
+    function decryptData(data, password) {
+        try {
+            let result = {};
+            let decryptedContent;
+
+            switch (data.type) {
+                case 'seed':
+                    const decryptedAddressBytes = CryptoJS.AES.decrypt(data.address, password);
+                    const decryptedAddress = decryptedAddressBytes.toString(CryptoJS.enc.Utf8);
+                    
+                    if (!decryptedAddress) {
+                        throw new Error('Неверный пароль');
+                    }
+
+                    const decryptedSeedBytes = CryptoJS.AES.decrypt(data.seed, password);
+                    const decryptedSeed = decryptedSeedBytes.toString(CryptoJS.enc.Utf8);
+
+                    if (!decryptedSeed) {
+                        throw new Error('Ошибка расшифровки seed-фразы');
+                    }
+
+                    result = {
+                        type: 'seed',
+                        displayText: `Адрес: ${decryptedAddress}\nНазвание: ${data.name || 'Не указано'}\nSeed: ${decryptedSeed}`,
+                        copyText: decryptedSeed
+                    };
+                    break;
+
+                case 'text':
+                    const decryptedTextBytes = CryptoJS.AES.decrypt(data.content, password);
+                    const decryptedText = decryptedTextBytes.toString(CryptoJS.enc.Utf8);
+                    
+                    if (!decryptedText) {
+                        throw new Error('Ошибка расшифровки текста');
+                    }
+
+                    result = {
+                        type: 'text',
+                        title: data.title,
+                        displayText: `Название: ${data.title}\nСодержимое: ${decryptedText}`,
+                        copyText: decryptedText
+                    };
+                    break;
+
+                case 'file':
+                    decryptedContent = CryptoJS.AES.decrypt(data.content, password).toString(CryptoJS.enc.Utf8);
+                    if (!decryptedContent) {
+                        throw new Error('Ошибка расшифровки файла');
+                    }
+
+                    // Расшифровываем оригинальное имя файла
+                    let filename = data.title;
+                    if (data.originalFilename) {
+                        try {
+                            const decryptedFilename = CryptoJS.AES.decrypt(data.originalFilename, password).toString(CryptoJS.enc.Utf8);
+                            if (decryptedFilename) {
+                                filename = decryptedFilename;
+                            }
+                        } catch (e) {
+                            console.warn('Не удалось расшифровать оригинальное имя файла');
+                        }
+                    }
+
+                    result = {
+                        type: 'file',
+                        title: data.title,
+                        filename: filename, // Оригинальное имя для сохранения
+                        content: decryptedContent,
+                        displayText: `Файл: ${data.title}`
+                    };
+                    break;
+            }
+
+            return result;
+        } catch (error) {
+            console.error('Ошибка расшифровки:', error);
+            throw error;
+        }
+    }
+
+    // Обновляем функцию addDecryptedResult для корректного отображения файлов
+    function addDecryptedResult(result, source, type) {
+        const container = document.getElementById('scanResultsList');
+        const resultItem = document.createElement('div');
+        resultItem.className = 'scan-result-item';
+
+        let sourceLabel = '';
+        switch(source) {
+            case 'qr': sourceLabel = 'QR код'; break;
+            case 'text': sourceLabel = 'Строка'; break;
+            case 'file': sourceLabel = 'Файл'; break;
+        }
+
+        if (type === 'file') {
+            resultItem.innerHTML = `
+                <div class="scan-result-content">
+                    <div class="result-data">
+                        <div class="result-label">Файл:</div>
+                        <div class="result-value">${result.title}</div>
+                        <div class="result-label">Оригинальное имя:</div>
+                        <div class="result-value">${result.filename}</div>
+                    </div>
+                    <button onclick="downloadDecryptedFile('${encodeURIComponent(result.content)}', '${encodeURIComponent(result.filename)}')">Скачать файл</button>
+                </div>
+            `;
+        } else if (type === 'seed') {
+            resultItem.innerHTML = `
+                <div class="result-data">
+                    <div>
+                        <div class="result-label">Адрес:</div>
+                        <div class="result-value">${result.displayText.split('\n')[0].replace('Адрес: ', '')}</div>
+                    </div>
+                    <div>
+                        <div class="result-label">Название:</div>
+                        <div class="result-value">${result.displayText.split('\n')[1].replace('Название: ', '')}</div>
+                    </div>
+                    <div>
+                        <div class="result-label">Seed-фраза:</div>
+                        <div class="result-value">${result.copyText}</div>
+                    </div>
+                </div>
+                <div class="scan-result-content">
+                    <div></div>
+                    <button class="copy-button" onclick="copyResultText(this)" data-copy-text="${encodeURIComponent(result.copyText)}">Копировать seed</button>
+                </div>
+            `;
+        } else {
+            resultItem.innerHTML = `
+                <div class="result-data">
+                    <div>
+                        <div class="result-label">Название:</div>
+                        <div class="result-value">${result.displayText.split('\n')[0].replace('Название: ', '')}</div>
+                    </div>
+                    <div>
+                        <div class="result-label">Содержимое:</div>
+                        <div class="result-value">${result.copyText}</div>
+                    </div>
+                </div>
+                <div class="scan-result-content">
+                    <div></div>
+                    <button class="copy-button" onclick="copyResultText(this)" data-copy-text="${encodeURIComponent(result.copyText)}">Копировать текст</button>
+                </div>
+            `;
+        }
+
+        container.insertBefore(resultItem, container.firstChild);
+    }
+
+    // Добавляем новую функцию для копирования текста результата
+    function copyResultText(button) {
+        // Получаем текст для копирования из атрибута кнопки
+        const copyText = decodeURIComponent(button.getAttribute('data-copy-text'));
+        
+        if (!copyText) {
+            console.error('Текст для копирования не найден');
+            alert('Ошибка при копировании');
+            return;
+        }
+        
+        const textarea = document.createElement('textarea');
+        textarea.value = copyText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('Ошибка при копировании:', err);
+            alert('Ошибка при копировании');
+        }
+        
+        document.body.removeChild(textarea);
+    }
+
+    // Обновляем функцию для скачивания файлов
+    function downloadDecryptedFile(content, filename) {
+        try {
+            if (!content || !filename) {
+                throw new Error('Отсутствуют данные файла или имя файла');
+            }
+
+            const decodedContent = decodeURIComponent(content);
+            const decodedFilename = decodeURIComponent(filename);
+            
+            // Преобразуем base64 обратно в бинарные данные
+            const binaryString = atob(decodedContent);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Создаем blob из бинарных данных
+            const blob = new Blob([bytes]);
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = decodedFilename; // Используем оригинальное имя файла
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Ошибка при скачивании файла:', error);
+            alert('Ошибка при скачивании файла: ' + error.message);
         }
     }
 </script>
