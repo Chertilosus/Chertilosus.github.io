@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Удаляем внешние библиотеки и добавляем jsQR -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <!-- Только одна библиотека для генерации -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -348,53 +348,14 @@
 
     // Функция для создания QR кода
     function generateQRCode(text) {
-        const canvas = document.createElement('canvas');
-        const size = 200;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        
-        // Создаем белый фон
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, size, size);
-        
-        // Создаем простую сетку QR кода
-        const cellSize = Math.floor(size / 25); // 25x25 ячеек для простого QR
-        ctx.fillStyle = '#000000';
-
-        // Кодируем текст в двоичный формат
-        const binary = text.split('').map(char => 
-            char.charCodeAt(0).toString(2).padStart(8, '0')
-        ).join('');
-
-        // Рисуем QR паттерн
-        for(let y = 0; y < 25; y++) {
-            for(let x = 0; x < 25; x++) {
-                if(Math.random() < 0.5) { // Упрощенная версия, просто для демонстрации
-                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-                }
-            }
-        }
-
-        // Добавляем маркеры позиционирования
-        function drawPositionMarker(x, y) {
-            ctx.fillRect(x * cellSize, y * cellSize, cellSize * 7, cellSize * 7);
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(x * cellSize + cellSize, y * cellSize + cellSize, 
-                       cellSize * 5, cellSize * 5);
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(x * cellSize + cellSize * 2, y * cellSize + cellSize * 2, 
-                       cellSize * 3, cellSize * 3);
-        }
-
-        drawPositionMarker(0, 0); // Верхний левый
-        drawPositionMarker(18, 0); // Верхний правый
-        drawPositionMarker(0, 18); // Нижний левый
-
-        return canvas.toDataURL();
+        // Правильное кодирование текста перед генерацией QR
+        const qr = qrcode(4, 'M');
+        qr.addData(text);
+        qr.make();
+        return qr.createDataURL(4); // Размер модуля 4 для лучшей читаемости
     }
 
-    function generateQR() {
+    async function generateQR() {
         const title = document.getElementById('qrTitle').value;
         const subtitle = document.getElementById('qrSubtitle').value;
         const content = document.getElementById('qrContent').value;
@@ -404,18 +365,12 @@
             return;
         }
 
-        if (!content.includes(' ')) {
-            if (!confirm('Seed-фраза обычно состоит из нескольких слов. Вы уверены, что ввели правильную seed-фразу?')) {
-                return;
-            }
-        }
-
         // Генерируем QR код локально
         const qrDataUrl = generateQRCode(content);
         
         generatedQRs.push({
             title: title,
-            subtitle: subtitle, // Добавляем значение по умолчанию
+            subtitle: subtitle || '',
             content: content,
             url: qrDataUrl
         });
@@ -469,7 +424,9 @@
 
     function addScanResult(text) {
         if (!scannedResults.includes(text)) {
-            scannedResults.push(text);
+            // Декодируем отсканированный текст
+            const decodedText = decodeURIComponent(text);
+            scannedResults.push(decodedText);
             updateScanResults();
         }
     }
@@ -505,6 +462,7 @@
     async function toggleScanner() {
         const video = document.getElementById('videoElement');
         const buttonText = document.getElementById('scanButtonText');
+        const canvas = document.getElementById('canvas');
         
         if (videoStream) {
             videoStream.getTracks().forEach(track => track.stop());
@@ -518,36 +476,39 @@
             buttonText.textContent = 'Выключить камеру';
             video.style.display = 'block';
             videoStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: "environment",
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                } 
+                video: { facingMode: "environment" } 
             });
             video.srcObject = videoStream;
 
-            video.onloadedmetadata = () => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-            };
+            // Используем встроенный BarcodeDetector
+            if ('BarcodeDetector' in window) {
+                const barcodeDetector = new BarcodeDetector({
+                    formats: ['qr_code']
+                });
 
-            requestAnimationFrame(scan);
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                };
 
-            function scan() {
-                if (!videoStream) return;
+                const scan = async () => {
+                    if (!videoStream) return;
 
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                
-                if (code) {
-                    addScanResult(code.data);
-                    // Не останавливаем сканирование после нахождения кода
-                }
+                    try {
+                        const barcodes = await barcodeDetector.detect(video);
+                        for (const barcode of barcodes) {
+                            addScanResult(barcode.rawValue);
+                        }
+                    } catch (error) {
+                        console.error('Ошибка сканирования:', error);
+                    }
+
+                    requestAnimationFrame(scan);
+                };
 
                 requestAnimationFrame(scan);
+            } else {
+                alert('Ваш браузер не поддерживает сканирование QR кодов');
             }
         } catch (error) {
             buttonText.textContent = 'Включить камеру';
