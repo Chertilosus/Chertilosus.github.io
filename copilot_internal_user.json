@@ -1,0 +1,23 @@
+{
+	"access_type_sku": "pro_copilot",
+	"analytics_tracking_id": "48265d30e5f7c8895093b237efe55dc6",
+	"assigned_date": "2025-01-13T21:26:50+03:00",
+	"can_signup_for_limited": false,
+	"chat_enabled": true,
+	"organization_login_list": [
+
+	],
+	"organization_list": [
+
+	],
+	"limited_user_quotas": {
+		"chat": 0,
+		"completions": 1888
+	},
+	"limited_user_subscribed_day": 0,
+	"limited_user_reset_date": "2025-02-13",
+	"monthly_quotas": {
+		"chat": 99999999,
+		"completions": 99999999999
+	}
+}
